@@ -1,0 +1,77 @@
+use context essentials2021
+
+include gdrive-sheets
+include shared-gdrive(
+  "dcic-2021",
+  "1wyQZj_L0qqV9Ekgr9au6RX2iqt2Ga8Ep")
+
+include data-source
+ssid = "1RYN0i4Zx_UETVuYacgaGfnFcv4l9zd9toQTTdkQkj7g"
+
+
+kWh-wealthy-consumer-data =
+  load-table: komponent, energi
+    source: load-spreadsheet(ssid).sheet-by-name("kWh", true)
+    sanitize energi using string-sanitizer
+end
+
+kWh-wealthy-consumer-data
+
+distance-travelled-per-day = 30 #km
+distance-per-unit-of-fuel = 10 #km/L
+energy-per-unit-of-fuel = 10  #kWh som oppgitt i formelen
+
+energy-per-day = ( distance-travelled-per-day / 
+                            
+distance-per-unit-of-fuel ) * 
+                                        
+energy-per-unit-of-fuel
+
+
+
+
+# Oppg. a:
+
+#gjort ovenfor
+
+
+
+
+# Oppg. b:
+
+fun energi-to-number(str :: String) -> Number:
+  doc: ```changes string value to number value```
+  cases(Option) string-to-number(str):
+    | some(a) => a
+    | none => energy-per-day
+  end
+where:
+  energi-to-number("") is energy-per-day
+  energi-to-number("48") is 48
+end
+
+
+
+
+# Oppg. c:
+
+fixed-energi = 
+transform-column(kWh-wealthy-consumer-data, "energi", energi-to-number)
+
+
+
+
+# Oppg. d:
+
+summer = sum(fixed-energi, "energi")
+
+table-summert = table: komponent :: String, energi :: Number
+  row: "Totalt energiforbruk", summer
+end
+
+new-row = get-row(table-summert, 0)
+add-row(fixed-energi, new-row)
+
+# Oppg. e:
+
+bar-chart(fixed-energi, "komponent", "energi")
